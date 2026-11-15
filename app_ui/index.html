@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="orange">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AeroMonitor Glass — Telemetria de Hardware</title>
+  <style>
+    /* ==========================================================================
+       TEMAS DE CORES DINÂMICOS (LARANJA, AZUL, VERDE, AMARELO, ROXO)
+       ========================================================================== */
+    :root, [data-theme="orange"] {
+      --accent: #e88662;
+      --accent-secondary: #d46a42;
+      --accent-glow: rgba(232, 134, 98, 0.35);
+      --accent-subtle: rgba(232, 134, 98, 0.15);
+      --accent-text: #f59e7f;
+      --bg-radial-1: rgba(232, 134, 98, 0.18);
+      --bg-radial-2: rgba(200, 95, 60, 0.13);
+      --bg-radial-3: rgba(160, 70, 45, 0.08);
+      --chart-stroke: #e88662;
+      --chart-fill: rgba(232, 134, 98, 0.32);
+    }
+
+    [data-theme="blue"] {
+      --accent: #38bdf8;
+      --accent-secondary: #0284c7;
+      --accent-glow: rgba(56, 189, 248, 0.35);
+      --accent-subtle: rgba(56, 189, 248, 0.15);
+      --accent-text: #7dd3fc;
+      --bg-radial-1: rgba(56, 189, 248, 0.18);
+      --bg-radial-2: rgba(14, 165, 233, 0.13);
+      --bg-radial-3: rgba(3, 105, 161, 0.08);
+      --chart-stroke: #38bdf8;
+      --chart-fill: rgba(56, 189, 248, 0.32);
+    }
+
+    [data-theme="green"] {
+      --accent: #22c55e;
+      --accent-secondary: #16a34a;
+      --accent-glow: rgba(34, 197, 94, 0.35);
+      --accent-subtle: rgba(34, 197, 94, 0.15);
+      --accent-text: #86efac;
+      --bg-radial-1: rgba(34, 197, 94, 0.18);
+      --bg-radial-2: rgba(22, 163, 74, 0.13);
+      --bg-radial-3: rgba(21, 128, 61, 0.08);
+      --chart-stroke: #22c55e;
+      --chart-fill: rgba(34, 197, 94, 0.32);
+    }
+
+    [data-theme="yellow"] {
+      --accent: #facc15;
+      --accent-secondary: #ca8a04;
+      --accent-glow: rgba(250, 204, 21, 0.35);
+      --accent-subtle: rgba(250, 204, 21, 0.15);
+      --accent-text: #fde047;
+      --bg-radial-1: rgba(250, 204, 21, 0.18);
+      --bg-radial-2: rgba(234, 179, 8, 0.13);
+      --bg-radial-3: rgba(161, 98, 7, 0.08);
+      --chart-stroke: #facc15;
+      --chart-fill: rgba(250, 204, 21, 0.32);
+    }
+
+    [data-theme="purple"] {
+      --accent: #c084fc;
+      --accent-secondary: #9333ea;
+      --accent-glow: rgba(192, 132, 252, 0.35);
+      --accent-subtle: rgba(192, 132, 252, 0.15);
+      --accent-text: #d8b4fe;
+      --bg-radial-1: rgba(192, 132, 252, 0.18);
+      --bg-radial-2: rgba(168, 85, 247, 0.13);
+      --bg-radial-3: rgba(126, 34, 206, 0.08);
+      --chart-stroke: #c084fc;
+      --chart-fill: rgba(192, 132, 252, 0.32);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      user-select: none;
+    }
+
+    body {
+      min-height: 100vh;
+      background-color: #120e0d;
+      background-image: 
+        radial-gradient(circle at 10% 15%, var(--bg-radial-1) 0%, transparent 40%),
+        radial-gradient(circle at 85% 20%, var(--bg-radial-2) 0%, transparent 45%),
+        radial-gradient(circle at 50% 85%, var(--bg-radial-3) 0%, transparent 50%),
+        linear-gradient(180deg, #181312 0%, #0d0a09 100%);
+      background-attachment: fixed;
+      color: #ede5e2;
+      overflow-x: hidden;
+      padding: 24px 32px;
+      transition: background-image 0.4s ease;
+    }
+
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
+
+    /* Painéis Glassmorphism */
+    .glass-panel {
+      background: rgba(32, 26, 24, 0.65);
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+    }
+
+    .glass-card-nested {
+      background: rgba(42, 34, 31, 0.55);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 18px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 6px 18px rgba(0,0,0,0.25);
+      transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .glass-card-nested:hover {
+      border-color: var(--accent);
+      background: rgba(48, 39, 36, 0.65);
+    }
+
+    /* Alerta de Alto Impacto / Sobrecarga */
+    .card-high-impact {
+      border-color: #ef4444 !important;
+      background: rgba(65, 25, 25, 0.72) !important;
+      box-shadow: 0 0 28px rgba(239, 68, 68, 0.45), inset 0 1px 0 rgba(255, 120, 120, 0.3) !important;
+      animation: alertPulse 1.4s infinite ease-in-out !important;
+    }
+
+    .pill-high-impact {
+      border-color: #ef4444 !important;
+      background: rgba(65, 25, 25, 0.75) !important;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.45) !important;
+      animation: alertPulse 1.4s infinite ease-in-out !important;
+    }
+
+    .impact-badge {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(239, 68, 68, 0.25);
+      border: 1px solid rgba(239, 68, 68, 0.6);
+      color: #ff8585;
+      margin-top: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .impact-badge.active {
+      display: flex;
+    }
+
+    /* Barra Superior */
+    .top-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      margin-bottom: 24px;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 18px;
+      box-shadow: 0 4px 16px var(--accent-glow);
+      transition: background 0.4s ease, box-shadow 0.4s ease;
+    }
+
+    .brand-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.2px;
+    }
+
+    .brand-subtitle {
+      font-size: 11px;
+      color: #9c8e89;
+    }
+
+    /* Seletor de Cores / Temas */
+    .theme-selector-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(22, 18, 16, 0.55);
+      padding: 4px 10px;
+      border-radius: 9999px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .theme-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #9e8e89;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-right: 2px;
+    }
+
+    .color-swatch {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .color-swatch:hover {
+      transform: scale(1.2);
+    }
+
+    .color-swatch.active {
+      border-color: #ffffff;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+      transform: scale(1.15);
+    }
+
+    .swatch-orange { background: #e88662; }
+    .swatch-blue   { background: #38bdf8; }
+    .swatch-green  { background: #22c55e; }
+    .swatch-yellow { background: #facc15; }
+    .swatch-purple { background: #c084fc; }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-accent {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: 9999px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 18px var(--accent-glow);
+      transition: filter 0.2s, transform 0.2s, background 0.4s;
+    }
+
+    .btn-accent:hover {
+      filter: brightness(1.12);
+      transform: translateY(-1px);
+    }
+
+    .btn-glass {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #ede5e2;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-glass:hover {
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(38, 55, 42, 0.7);
+      border: 1px solid rgba(82, 196, 114, 0.3);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #6ee791;
+    }
+
+    .pulsing-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #52c472;
+      box-shadow: 0 0 10px #52c472;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.3); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+
+    /* Cabecalho Principal */
+    .header-section {
+      margin-bottom: 24px;
+    }
+
+    .main-title {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+      color: #fff;
+    }
+
+    .sub-title {
+      font-size: 14px;
+      color: #a39590;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tag-bubble {
+      display: inline-block;
+      padding: 2px 10px;
+      background: var(--accent-subtle);
+      border: 1px solid var(--accent);
+      border-radius: 9999px;
+      color: var(--accent-text);
+      font-size: 11px;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    /* Fileira de Metricas Superiores (Pills) */
+    .stat-pills-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-pill-card {
+      padding: 16px 20px;
+      border-radius: 18px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .stat-pill-card .label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #a89a95;
+      margin-bottom: 6px;
+    }
+
+    .stat-pill-card .value-row {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      font-size: 26px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .stat-pill-card .subtext {
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+
+    .mini-progress-bar {
+      height: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 2px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+
+    .mini-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #ffffff);
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.4s ease, background 0.4s ease;
+    }
+
+    /* Grid Principal - 4 Colunas Dedicadas por Peça de Hardware */
+    .board-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+
+    .board-column {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .column-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 2px 6px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      color: #d1c4c0;
+    }
+
+    .column-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--accent-subtle);
+      border: 1px solid var(--accent);
+      font-size: 11px;
+      color: #fff;
+      font-weight: 700;
+      transition: all 0.3s;
+    }
+
+    /* Cards com Grafico (Linha Superior) - Alinhamento Perfeito */
+    .chart-card {
+      height: 250px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Cards de Detalhes da Peça (Linha Inferior) */
+    .detail-card {
+      height: 154px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .card-top-content {
+      width: 100%;
+    }
+
+    .card-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #9e8e89;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-height: 22px;
+    }
+
+    .big-stat {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+
+    .unit-label {
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--accent);
+      margin-left: 2px;
+      transition: color 0.3s;
+    }
+
+    .stat-meta {
+      font-size: 13px;
+      color: #a89a95;
+      min-height: 18px;
+    }
+
+    /* Caixa Rigida do Sparkline - Nivelamento Horizontal */
+    .sparkline-wrapper {
+      position: relative;
+      width: 100%;
+      height: 72px;
+      margin-top: 6px;
+      background: rgba(18, 14, 13, 0.45);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      padding: 6px 8px 4px 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .sparkline-guide-line {
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.05);
+      pointer-events: none;
+    }
+
+    .sparkline-guide-50 { top: 50%; }
+
+    canvas.sparkline {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Chips de Status */
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .status-ok {
+      background: rgba(82, 196, 114, 0.15);
+      border: 1px solid rgba(82, 196, 114, 0.3);
+      color: #6ee791;
+    }
+
+    .status-alert {
+      background: rgba(240, 78, 78, 0.25);
+      border: 1px solid rgba(240, 78, 78, 0.5);
+      color: #ff6b6b;
+      animation: alertPulse 1.2s infinite;
+    }
+
+    @keyframes alertPulse {
+      0% { opacity: 0.8; }
+      50% { opacity: 1; }
+      100% { opacity: 0.8; }
+    }
+
+    /* Process Pill */
+    .process-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(20, 16, 14, 0.6);
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      margin-top: 4px;
+    }
+
+    .process-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: var(--accent-subtle);
+      border: 1px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+      flex-shrink: 0;
+      transition: all 0.3s;
+    }
+
+    .process-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .process-usage {
+      font-size: 11px;
+      color: #a89a95;
+    }
+
+    .action-button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    /* Footer */
+    .footer-bar {
+      margin-top: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #8c7e79;
+      padding: 0 8px;
+    }
+
+    .footer-bar a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Barra Superior -->
+  <div class="glass-panel top-nav">
+    <div class="brand-section">
+      <div class="brand-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-title">AeroMonitor Glass</div>
+        <div class="brand-subtitle">AMD Ryzen 7 5700X · Radeon RX 6600 XT · 32 GB RAM</div>
+      </div>
+    </div>
+
+    <!-- Seletor de Cores -->
+    <div class="theme-selector-container">
+      <span class="theme-label">Tema:</span>
+      <div class="color-swatch swatch-orange active" onclick="setTheme('orange')" title="Laranja (Warm Coral)"></div>
+      <div class="color-swatch swatch-blue" onclick="setTheme('blue')" title="Azul (Cyber Ice)"></div>
+      <div class="color-swatch swatch-green" onclick="setTheme('green')" title="Verde (Matrix Emerald)"></div>
+      <div class="color-swatch swatch-yellow" onclick="setTheme('yellow')" title="Amarelo (Cyber Amber)"></div>
+      <div class="color-swatch swatch-purple" onclick="setTheme('purple')" title="Roxo (Synthwave Violet)"></div>
+    </div>
+
+    <div class="nav-actions">
+      <div class="live-badge">
+        <div class="pulsing-dot"></div>
+        GRAVANDO LOG
+      </div>
+      <button class="btn-glass" onclick="openLogFolder()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+        Pasta
+      </button>
+      <button class="btn-accent" onclick="stopMonitoring()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <rect x="9" y="9" width="6" height="6"></rect>
+        </svg>
+        Parar
+      </button>
+    </div>
+  </div>
+
+  <!-- Cabecalho da Pagina -->
+  <div class="header-section">
+    <div class="main-title">Monitor de Hardware em Tempo Real</div>
+    <div class="sub-title">
+      <span id="sessionTimer">Sessão ativa: 00:00:00</span>
+      <span>•</span>
+      <span id="samplesCount">0 amostras gravadas</span>
+      <span>•</span>
+      <span class="tag-bubble">AutoFlush Imediato (Anti-Queda)</span>
+    </div>
+  </div>
+
+  <!-- Fileira Superior (4 Peças do Hardware) -->
+  <div class="stat-pills-row">
+    <div class="glass-panel stat-pill-card" id="pillCpuCard">
+      <div class="label-row">
+        <span>1. PROCESSADOR</span>
+        <span id="pillCpuFreq">3.600 MHz</span>
+      </div>
+      <div class="value-row">
+        <span id="pillCpuVal">0</span><span class="unit-label">%</span>
+      </div>
+      <div class="subtext">Ryzen 7 5700X (8C / 16T)</div>
+      <div class="mini-progress-bar">
+        <div class="mini-progress-fill" id="barCpu" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <div class="glass-panel stat-pill-card" id="pillGpuCard">
+      <div class="label-row">
+        <span>2. PLACA DE VÍDEO</span>
+        <span>Motor 3D</span>
+      </div>
+      <div class="value-row">
+        <span id="pillGpuVal">0</span><span class="unit-label">%</span>
+      </div>
+      <div class="subtext">Radeon RX 6600 XT</div>
+      <div class="mini-progress-bar">
+        <div class="mini-progress-fill" id="barGpu" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <div class="glass-panel stat-pill-card" id="pillRamCard">
+      <div class="label-row">
+        <span>3. MEMÓRIA RAM</span>
+        <span id="pillRamVal">0 GB</span>
+      </div>
+      <div class="value-row">
+        <span id="pillRamPct">0</span><span class="unit-label">%</span>
+      </div>
+      <div class="subtext">31,91 GB DDR4 3200MHz</div>
+      <div class="mini-progress-bar">
+        <div class="mini-progress-fill" id="barRam" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <div class="glass-panel stat-pill-card" id="pillDiskCard">
+      <div class="label-row">
+        <span>4. ARMAZENAMENTO</span>
+        <span>I/O SSD</span>
+      </div>
+      <div class="value-row">
+        <span id="pillDiskVal">0</span><span class="unit-label">%</span>
+      </div>
+      <div class="subtext">Disco Principal & Log</div>
+      <div class="mini-progress-bar">
+        <div class="mini-progress-fill" id="barDisk" style="width: 0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grid Principal (Cada Coluna é 100% sobre uma Peça do Hardware) -->
+  <div class="board-grid">
+
+    <!-- ====================================================================
+         COLUNA 1: PROCESSADOR (CPU)
+         ==================================================================== -->
+    <div class="board-column">
+      <div class="column-header">
+        <span>PROCESSADOR (CPU)</span>
+        <span class="column-badge">1</span>
+      </div>
+
+      <!-- Card do Grafico de CPU -->
+      <div class="glass-card-nested chart-card" id="cardCpu">
+        <div class="card-top-content">
+          <div class="card-title">
+            <span>USO DO PROCESSADOR</span>
+            <span class="status-chip status-ok" id="statusThrottling">100% SEGURO</span>
+          </div>
+          <div class="big-stat"><span id="cardCpuVal">0</span><span class="unit-label">%</span></div>
+          <div class="stat-meta">Frequência real: <strong id="cardCpuClock" style="color: #fff;">3.599 MHz</strong></div>
+          <div class="impact-badge" id="cpuImpactBadge"></div>
+        </div>
+        
+        <div class="sparkline-wrapper">
+          <div class="sparkline-guide-line sparkline-guide-50"></div>
+          <canvas id="chartCpu" class="sparkline"></canvas>
+        </div>
+      </div>
+
+      <!-- Detalhes do Processador: Limite Termico & Frequencia -->
+      <div class="glass-card-nested detail-card">
+        <div class="card-title">SAÚDE TÉRMICA & CLOCK</div>
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span style="font-size:14px; font-weight:600; color:#fff;" id="throttlingText">100% de Entrega</span>
+            <span style="font-size:12px; color:#6ee791;" id="throttlingSub">Sem cortes térmicos</span>
+          </div>
+          <div style="font-size:11px; color:#8f807b; line-height:1.4;">
+            Se o processador esquentar demais, a placa-mãe força o corte da frequência para evitar queima.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         COLUNA 2: PLACA DE VÍDEO (GPU)
+         ==================================================================== -->
+    <div class="board-column">
+      <div class="column-header">
+        <span>PLACA DE VÍDEO (GPU)</span>
+        <span class="column-badge">2</span>
+      </div>
+
+      <!-- Card do Grafico de GPU -->
+      <div class="glass-card-nested chart-card" id="cardGpu">
+        <div class="card-top-content">
+          <div class="card-title">
+            <span>CARGA GRÁFICA (3D)</span>
+            <span class="status-chip status-ok" id="gpuStatusBadge">NORMAL</span>
+          </div>
+          <div class="big-stat"><span id="cardGpuVal">0</span><span class="unit-label">%</span></div>
+          <div class="stat-meta">Radeon RX 6600 XT · WDDM Nativo</div>
+          <div class="impact-badge" id="gpuImpactBadge"></div>
+        </div>
+        
+        <div class="sparkline-wrapper">
+          <div class="sparkline-guide-line sparkline-guide-50"></div>
+          <canvas id="chartGpu" class="sparkline"></canvas>
+        </div>
+      </div>
+
+      <!-- Detalhes da GPU: Memoria VRAM Dedicada -->
+      <div class="glass-card-nested detail-card">
+        <div class="card-title">MEMÓRIA DE VÍDEO (VRAM)</div>
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
+            <div class="big-stat" style="font-size: 26px; margin-bottom:0;">
+              <span id="cardVramMB">0</span> <span style="font-size:15px; color:var(--accent);">MB</span>
+            </div>
+            <div style="font-size: 12px; color: #a89a95;">
+              <span id="cardVramPercent">0%</span> de 8.192 MB
+            </div>
+          </div>
+          <div class="mini-progress-bar" style="height:6px; margin-top:4px;">
+            <div class="mini-progress-fill" id="barVramCard" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         COLUNA 3: MEMÓRIA RAM
+         ==================================================================== -->
+    <div class="board-column">
+      <div class="column-header">
+        <span>MEMÓRIA RAM</span>
+        <span class="column-badge">3</span>
+      </div>
+
+      <!-- Card do Grafico de RAM -->
+      <div class="glass-card-nested chart-card" id="cardRam">
+        <div class="card-top-content">
+          <div class="card-title">
+            <span>USO DA MEMÓRIA RAM</span>
+            <span class="status-chip status-ok">32 GB DDR4</span>
+          </div>
+          <div class="big-stat"><span id="cardRamUsed">0</span><span class="unit-label">GB</span></div>
+          <div class="stat-meta">Total: 31,91 GB (<span id="cardRamPercent">0%</span>)</div>
+          <div class="impact-badge" id="ramImpactBadge"></div>
+        </div>
+        
+        <div class="sparkline-wrapper">
+          <div class="sparkline-guide-line sparkline-guide-50"></div>
+          <canvas id="chartRam" class="sparkline"></canvas>
+        </div>
+      </div>
+
+      <!-- Detalhes da RAM: Aplicativo Mais Pesado & Memoria Livre -->
+      <div class="glass-card-nested detail-card">
+        <div class="card-title">APLICATIVO MAIS PESADO EM RAM</div>
+        <div class="process-pill">
+          <div class="process-avatar">⚡</div>
+          <div style="overflow:hidden;">
+            <div class="process-name" id="topProcessName">Aguardando...</div>
+            <div class="process-usage" id="topProcessUsage">Consumo ativo no momento</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         COLUNA 4: ARMAZENAMENTO & DISCO
+         ==================================================================== -->
+    <div class="board-column">
+      <div class="column-header">
+        <span>ARMAZENAMENTO (DISCO)</span>
+        <span class="column-badge">4</span>
+      </div>
+
+      <!-- Card do Grafico de Disco -->
+      <div class="glass-card-nested chart-card" id="cardDisk">
+        <div class="card-top-content">
+          <div class="card-title">
+            <span>ATIVIDADE DO DISCO</span>
+            <span class="status-chip status-ok">I/O SSD</span>
+          </div>
+          <div class="big-stat"><span id="cardDiskVal">0</span><span class="unit-label">%</span></div>
+          <div class="stat-meta">Operações de leitura e escrita</div>
+          <div class="impact-badge" id="diskImpactBadge"></div>
+        </div>
+        
+        <div class="sparkline-wrapper">
+          <div class="sparkline-guide-line sparkline-guide-50"></div>
+          <canvas id="chartDisk" class="sparkline"></canvas>
+        </div>
+      </div>
+
+      <!-- Detalhes do Disco: Arquivo CSV de Log e AutoFlush -->
+      <div class="glass-card-nested detail-card">
+        <div class="card-title">GRAVAÇÃO DO LOG (ANTI-QUEDA)</div>
+        <div>
+          <div style="font-size: 11px; font-weight:600; color:#fff; word-break:break-all; margin-bottom:8px; line-height:1.2;" id="csvFileName">
+            hardware_log.csv
+          </div>
+          <div class="action-button-row">
+            <button class="btn-accent" style="padding:6px 12px; font-size:11px;" onclick="openLogFolder()">
+              Abrir CSV
+            </button>
+            <button class="btn-glass" style="padding:6px 12px; font-size:11px;" onclick="openLogFolder()">
+              Ver Pasta
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer-bar">
+    <div>Proteção ativa: cada segundo é descarregado diretamente no SSD via <code>AutoFlush</code>.</div>
+    <div>AeroMonitor Glass v2.2 • AMD Ryzen 7 5700X & Radeon RX 6600 XT</div>
+  </div>
+
+  <script>
+    // 1. Dados e Historico dos Graficos
+    const historyLength = 32;
+    const historyCpu = new Array(historyLength).fill(0);
+    const historyGpu = new Array(historyLength).fill(0);
+    const historyRam = new Array(historyLength).fill(0);
+    const historyDisk = new Array(historyLength).fill(0);
+
+    let sampleCount = 0;
+    const startTime = Date.now();
+
+    // 2. Mapa Confiável de Cores dos Temas
+    const themeColorMap = {
+      orange: { stroke: '#e88662', fill: 'rgba(232, 134, 98, 0.35)' },
+      blue:   { stroke: '#38bdf8', fill: 'rgba(56, 189, 248, 0.35)' },
+      green:  { stroke: '#22c55e', fill: 'rgba(34, 197, 94, 0.35)' },
+      yellow: { stroke: '#facc15', fill: 'rgba(250, 204, 21, 0.35)' },
+      purple: { stroke: '#c084fc', fill: 'rgba(192, 132, 252, 0.35)' }
+    };
+
+    let currentTheme = localStorage.getItem('aeromonitor_theme') || 'orange';
+
+    function getThemeColors() {
+      return themeColorMap[currentTheme] || themeColorMap.orange;
+    }
+
+    // 3. Desenho de sparkline de alta resolucao com curvas suaves
+    function drawSparkline(canvasId, data) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width || canvas.clientWidth || 240;
+      const h = rect.height || canvas.clientHeight || 70;
+
+      if (canvas.width !== Math.floor(w * dpr) || canvas.height !== Math.floor(h * dpr)) {
+        canvas.width = Math.floor(w * dpr);
+        canvas.height = Math.floor(h * dpr);
+      }
+
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, w, h);
+
+      if (!data || data.length < 2) {
+        ctx.restore();
+        return;
+      }
+
+      const { stroke, fill } = getThemeColors();
+      const points = [];
+      const step = w / (data.length - 1);
+      const padding = 6;
+      const chartHeight = h - padding * 2;
+
+      for (let i = 0; i < data.length; i++) {
+        const val = Math.max(0, Math.min(100, data[i]));
+        const y = h - padding - (val / 100) * chartHeight;
+        const x = i * step;
+        points.push({ x, y });
+      }
+
+      // Curvas Bezier
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+
+      for (let i = 0; i < points.length - 1; i++) {
+        const p0 = points[Math.max(0, i - 1)];
+        const p1 = points[i];
+        const p2 = points[i + 1];
+        const p3 = points[Math.min(points.length - 1, i + 2)];
+
+        const cp1x = p1.x + (p2.x - p0.x) / 6;
+        const cp1y = p1.y + (p2.y - p0.y) / 6;
+        const cp2x = p2.x - (p3.x - p1.x) / 6;
+        const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+      }
+
+      // Preenchimento gradiente
+      ctx.lineTo(w, h);
+      ctx.lineTo(0, h);
+      ctx.closePath();
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, fill);
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Linha neon
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 0; i < points.length - 1; i++) {
+        const p0 = points[Math.max(0, i - 1)];
+        const p1 = points[i];
+        const p2 = points[i + 1];
+        const p3 = points[Math.min(points.length - 1, i + 2)];
+
+        const cp1x = p1.x + (p2.x - p0.x) / 6;
+        const cp1y = p1.y + (p2.y - p0.y) / 6;
+        const cp2x = p2.x - (p3.x - p1.x) / 6;
+        const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+      }
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 2.5;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.shadowColor = stroke;
+      ctx.shadowBlur = 8;
+      ctx.stroke();
+
+      // Ponto na extremidade mais recente
+      const last = points[points.length - 1];
+      ctx.shadowBlur = 0;
+      ctx.beginPath();
+      ctx.arc(last.x, last.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(last.x, last.y, 6, 0, Math.PI * 2);
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function redrawAllCharts() {
+      drawSparkline('chartCpu', historyCpu);
+      drawSparkline('chartGpu', historyGpu);
+      drawSparkline('chartRam', historyRam);
+      drawSparkline('chartDisk', historyDisk);
+    }
+
+    // 4. Funcao de Troca de Tema
+    function setTheme(themeName) {
+      currentTheme = themeName;
+      document.documentElement.setAttribute('data-theme', themeName);
+      localStorage.setItem('aeromonitor_theme', themeName);
+
+      document.querySelectorAll('.color-swatch').forEach(sw => {
+        sw.classList.remove('active');
+        if (sw.classList.contains('swatch-' + themeName)) {
+          sw.classList.add('active');
+        }
+      });
+
+      redrawAllCharts();
+    }
+
+    setTheme(currentTheme);
+
+    // 5. Cronometro
+    function updateTimer() {
+      const elapsedSec = Math.floor((Date.now() - startTime) / 1000);
+      const h = String(Math.floor(elapsedSec / 3600)).padStart(2, '0');
+      const m = String(Math.floor((elapsedSec % 3600) / 60)).padStart(2, '0');
+      const s = String(elapsedSec % 60).padStart(2, '0');
+      document.getElementById('sessionTimer').textContent = `Sessão ativa: ${h}:${m}:${s}`;
+    }
+    setInterval(updateTimer, 1000);
+
+    // 6. Loop de Coleta de Metricas da API
+    async function fetchMetrics() {
+      try {
+        const res = await fetch('/api/metrics');
+        if (!res.ok) return;
+        const d = await res.json();
+
+        sampleCount++;
+        document.getElementById('samplesCount').textContent = `${sampleCount} amostras gravadas`;
+
+        // 1. Processador (CPU)
+        const cpu = Math.round(d.cpu || 0);
+        document.getElementById('pillCpuVal').textContent = cpu;
+        document.getElementById('cardCpuVal').textContent = cpu;
+        document.getElementById('barCpu').style.width = Math.min(100, cpu) + '%';
+        const clockStr = (d.clock || 3600) + ' MHz';
+        document.getElementById('pillCpuFreq').textContent = clockStr;
+        document.getElementById('cardCpuClock').textContent = clockStr;
+
+        historyCpu.shift();
+        historyCpu.push(cpu);
+
+        // Throttling
+        const perfLimit = d.perfLimit || 100;
+        const throttlingBadge = document.getElementById('statusThrottling');
+        const throttlingText = document.getElementById('throttlingText');
+        const throttlingSub = document.getElementById('throttlingSub');
+
+        if (perfLimit < 100) {
+          throttlingBadge.className = 'status-chip status-alert';
+          throttlingBadge.textContent = 'SUPERAQUECIMENTO';
+          throttlingText.textContent = `${perfLimit}% de Limite`;
+          throttlingSub.textContent = 'Hardware cortando frequência!';
+          throttlingSub.style.color = '#ff6b6b';
+        } else {
+          throttlingBadge.className = 'status-chip status-ok';
+          throttlingBadge.textContent = '100% SEGURO';
+          throttlingText.textContent = '100% de Entrega';
+          throttlingSub.textContent = 'Sem cortes térmicos';
+          throttlingSub.style.color = '#6ee791';
+        }
+
+        // DESTAQUE DE IMPACTO NA CPU
+        const cpuCard = document.getElementById('cardCpu');
+        const cpuPill = document.getElementById('pillCpuCard');
+        const cpuBadge = document.getElementById('cpuImpactBadge');
+        if (perfLimit < 100) {
+          cpuCard.classList.add('card-high-impact');
+          cpuPill.classList.add('pill-high-impact');
+          cpuBadge.classList.add('active');
+          cpuBadge.innerHTML = `🚨 SUPERAQUECIMENTO: Corte para ${perfLimit}%!`;
+        } else if (cpu >= 75) {
+          cpuCard.classList.add('card-high-impact');
+          cpuPill.classList.add('pill-high-impact');
+          cpuBadge.classList.add('active');
+          cpuBadge.innerHTML = `⚠️ ALTO IMPACTO: ${d.topCpuName || 'Processo'} (${cpu}%)`;
+        } else {
+          cpuCard.classList.remove('card-high-impact');
+          cpuPill.classList.remove('pill-high-impact');
+          cpuBadge.classList.remove('active');
+        }
+
+        // 2. Placa de Vídeo (GPU)
+        const gpu = Math.round(d.gpu || 0);
+        document.getElementById('pillGpuVal').textContent = gpu;
+        document.getElementById('cardGpuVal').textContent = gpu;
+        document.getElementById('barGpu').style.width = Math.min(100, gpu) + '%';
+
+        historyGpu.shift();
+        historyGpu.push(gpu);
+
+        // VRAM
+        const vramMB = Math.round(d.vramMB || 0);
+        const vramPct = Math.round((vramMB / 8192) * 100);
+        document.getElementById('cardVramMB').textContent = vramMB;
+        document.getElementById('cardVramPercent').textContent = vramPct + '%';
+        document.getElementById('barVramCard').style.width = Math.min(100, vramPct) + '%';
+
+        // DESTAQUE DE IMPACTO NA GPU
+        const gpuCard = document.getElementById('cardGpu');
+        const gpuPill = document.getElementById('pillGpuCard');
+        const gpuBadge = document.getElementById('gpuImpactBadge');
+        if (vramPct >= 85) {
+          gpuCard.classList.add('card-high-impact');
+          gpuPill.classList.add('pill-high-impact');
+          gpuBadge.classList.add('active');
+          gpuBadge.innerHTML = `⚠️ VRAM CRÍTICA: ${vramMB} MB (${vramPct}%)`;
+        } else if (gpu >= 80) {
+          gpuCard.classList.add('card-high-impact');
+          gpuPill.classList.add('pill-high-impact');
+          gpuBadge.classList.add('active');
+          gpuBadge.innerHTML = `⚠️ CARGA INTENSA: Motor 3D em ${gpu}%`;
+        } else {
+          gpuCard.classList.remove('card-high-impact');
+          gpuPill.classList.remove('pill-high-impact');
+          gpuBadge.classList.remove('active');
+        }
+
+        // 3. Memória RAM
+        const ramUsed = d.ramUsed || 0;
+        const ramPct = Math.round(d.ramPct || 0);
+        document.getElementById('pillRamVal').textContent = ramUsed.toFixed(1) + ' GB';
+        document.getElementById('pillRamPct').textContent = ramPct;
+        document.getElementById('cardRamUsed').textContent = ramUsed.toFixed(1);
+        document.getElementById('cardRamPercent').textContent = ramPct + '%';
+        document.getElementById('barRam').style.width = Math.min(100, ramPct) + '%';
+
+        historyRam.shift();
+        historyRam.push(ramPct);
+
+        // DESTAQUE DE IMPACTO NA RAM
+        const ramCard = document.getElementById('cardRam');
+        const ramPill = document.getElementById('pillRamCard');
+        const ramBadge = document.getElementById('ramImpactBadge');
+        if (ramPct >= 80) {
+          ramCard.classList.add('card-high-impact');
+          ramPill.classList.add('pill-high-impact');
+          ramBadge.classList.add('active');
+          ramBadge.innerHTML = `⚠️ MEMÓRIA ELEVADA: ${d.topMemName} (${d.topMemMB} MB)`;
+        } else {
+          ramCard.classList.remove('card-high-impact');
+          ramPill.classList.remove('pill-high-impact');
+          ramBadge.classList.remove('active');
+        }
+
+        // 4. Armazenamento (Disco)
+        const disk = Math.min(100, Math.round(d.disk || 0));
+        document.getElementById('pillDiskVal').textContent = disk;
+        document.getElementById('cardDiskVal').textContent = disk;
+        document.getElementById('barDisk').style.width = Math.min(100, disk) + '%';
+
+        historyDisk.shift();
+        historyDisk.push(disk);
+
+        // DESTAQUE DE IMPACTO NO DISCO
+        const diskCard = document.getElementById('cardDisk');
+        const diskPill = document.getElementById('pillDiskCard');
+        const diskBadge = document.getElementById('diskImpactBadge');
+        if (disk >= 85) {
+          diskCard.classList.add('card-high-impact');
+          diskPill.classList.add('pill-high-impact');
+          diskBadge.classList.add('active');
+          diskBadge.innerHTML = `⚠️ DISCO EM 100%: Fila de I/O intensa!`;
+        } else {
+          diskCard.classList.remove('card-high-impact');
+          diskPill.classList.remove('pill-high-impact');
+          diskBadge.classList.remove('active');
+        }
+
+        // Redesenha os graficos
+        redrawAllCharts();
+
+        // Top Process
+        if (d.topProc) {
+          document.getElementById('topProcessName').textContent = d.topProc;
+        }
+
+        // CSV Name
+        if (d.csvFile) {
+          document.getElementById('csvFileName').textContent = d.csvFile;
+        }
+
+      } catch (err) {
+        console.warn('Conexao local aguardando...', err);
+      }
+    }
+
+    setInterval(fetchMetrics, 1000);
+    fetchMetrics();
+
+    async function stopMonitoring() {
+      if (confirm('Deseja encerrar o monitoramento e salvar o arquivo final de log?')) {
+        await fetch('/api/stop');
+        window.close();
+      }
+    }
+
+    async function openLogFolder() {
+      await fetch('/api/open-folder');
+    }
+  </script>
+</body>
+</html>

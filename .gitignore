@@ -1,0 +1,10 @@
+# Logs de telemetria gerados pelo monitoramento
+*.csv
+*.log
+
+# Arquivos de IDE e sistema
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+*.tmp
